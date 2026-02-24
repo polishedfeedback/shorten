@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/polishedfeedback/shorten/internal/services"
@@ -11,6 +12,13 @@ import (
 
 type LinkRequest struct {
 	URL string `json:"url" binding:"required"`
+}
+
+type LinkResponse struct {
+	ID          uint      `json:"id"`
+	ShortCode   string    `json:"short_code"`
+	OriginalURL string    `json:"original_url"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func CreateLink(db *gorm.DB) gin.HandlerFunc {
@@ -70,6 +78,15 @@ func GetLinks(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error getting links"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"data": links})
+		response := make([]LinkResponse, 0)
+		for _, link := range links {
+			response = append(response, LinkResponse{
+				ID:          link.ID,
+				ShortCode:   link.ShortCode,
+				OriginalURL: link.OriginalURL,
+				CreatedAt:   link.CreatedAt,
+			})
+		}
+		c.JSON(http.StatusOK, gin.H{"data": response})
 	}
 }

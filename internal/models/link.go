@@ -7,5 +7,5 @@ type Link struct {
 	ShortCode   string  `gorm:"uniqueIndex;not null"`
 	OriginalURL string  `gorm:"not null"`
 	UserID      uint    `gorm:"not null"`
-	Links       []Click `gorm:"foreignKey:LinkID"`
+	Clicks      []Click `gorm:"foreignKey:LinkID"`
 }

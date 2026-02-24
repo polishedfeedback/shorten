@@ -34,7 +34,6 @@ func CreateLink(db *gorm.DB, userID uint, originalURL string) (models.Link, erro
 
 func GetLinks(db *gorm.DB, userID uint) ([]models.Link, error) {
 	var links []models.Link
-
 	result := db.Where("user_id = ?", userID).Find(&links)
 	if result.Error != nil {
 		return []models.Link{}, fmt.Errorf("error querying links: %v", result.Error)

@@ -3,9 +3,12 @@ package router
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/polishedfeedback/shorten/internal/handlers"
+	"github.com/polishedfeedback/shorten/internal/middleware"
+	"gorm.io/gorm"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -15,5 +18,17 @@ func SetupRouter() *gin.Engine {
 		AllowCredentials: true,
 	}))
 
+	r.POST("/api/auth/register", handlers.Register(db))
+	r.POST("/api/auth/login", handlers.Login(db))
+	r.GET("/:code", handlers.Redirect(db))
+
+	authorized := r.Group("/api/links")
+
+	authorized.Use(middleware.AuthRequired())
+	{
+		authorized.GET("", handlers.GetLinks(db))
+		authorized.POST("", handlers.CreateLink(db))
+		authorized.DELETE("/:id", handlers.DeleteLink(db))
+	}
 	return r
 }
