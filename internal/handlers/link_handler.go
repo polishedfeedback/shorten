@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/polishedfeedback/shorten/internal/models"
 	"github.com/polishedfeedback/shorten/internal/services"
 	"gorm.io/gorm"
 )
@@ -19,6 +20,7 @@ type LinkResponse struct {
 	ShortCode   string    `json:"short_code"`
 	OriginalURL string    `json:"original_url"`
 	CreatedAt   time.Time `json:"created_at"`
+	Clicks      int64     `json:"clicks"`
 }
 
 func CreateLink(db *gorm.DB) gin.HandlerFunc {
@@ -73,11 +75,32 @@ func GetLinks(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
-		links, err := services.GetLinks(db, uint(userID.(float64)))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error getting links"})
-			return
+
+		var links []models.Link
+		db.Where("user_id = ?", uint(userID.(float64))).Find(&links)
+
+		type ClickCount struct {
+			LinkID uint
+			Count  int64
 		}
+		var clickCounts []ClickCount
+		db.Model(&models.Click{}).
+			Select("link_id, count(*) as count").
+			Where("link_id IN ?", func() []uint {
+				ids := make([]uint, len(links))
+				for i, l := range links {
+					ids[i] = l.ID
+				}
+				return ids
+			}()).
+			Group("link_id").
+			Scan(&clickCounts)
+
+		countMap := make(map[uint]int64)
+		for _, cc := range clickCounts {
+			countMap[cc.LinkID] = cc.Count
+		}
+
 		response := make([]LinkResponse, 0)
 		for _, link := range links {
 			response = append(response, LinkResponse{
@@ -85,8 +108,10 @@ func GetLinks(db *gorm.DB) gin.HandlerFunc {
 				ShortCode:   link.ShortCode,
 				OriginalURL: link.OriginalURL,
 				CreatedAt:   link.CreatedAt,
+				Clicks:      countMap[link.ID],
 			})
 		}
+
 		c.JSON(http.StatusOK, gin.H{"data": response})
 	}
 }

@@ -1,3 +1,33 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+@theme {
+    --font-sans: 'Space Grotesk', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+}
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+:root {
+    --bg: #f5f0e8;
+    --bg-secondary: #ede8df;
+    --text: #0a0a0a;
+    --text-muted: #444;
+    --card-bg: #ffffff;
+    --border: #0a0a0a;
+}
+
+[data-theme='dark'] {
+    --bg: #0f0f0f;
+    --bg-secondary: #1a1a1a;
+    --text: #f0ebe0;
+    --text-muted: #aaa;
+    --card-bg: #1a1a1a;
+    --border: #f0ebe0;
+}
